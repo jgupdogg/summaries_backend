@@ -1,8 +1,12 @@
 
-from bs4 import BeautifulSoup
 from datetime import datetime
-import re
-from initialize import *
+from scraper_api import make_scraper_request
+import os
+from bs4 import BeautifulSoup
+
+SCRAPER_URL = os.getenv('SCRAPER_URL')
+
+
 
 def parse_cbo_article_links(soup):
     article_links = []
@@ -33,14 +37,12 @@ def parse_cbo_article_links(soup):
                     try:
                         article['date'] = datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%SZ').date()
                     except ValueError:
-                        # If date format is different, you might need to adjust the parsing
                         article['date'] = date_str
             
             if article:
                 article_links.append(article)
     
     return article_links
-
 
 def parse_cbo_view_document_link(soup):
     view_document_link = None
@@ -56,13 +58,20 @@ def parse_cbo_view_document_link(soup):
     
     return view_document_link
 
+def parse_cbo_article_content(url):
+    # Make the initial request to the provided URL
+    html_content = make_scraper_request(url)
+    
+    # Parse the initial soup from the HTML content
+    soup = BeautifulSoup(html_content, 'html.parser')
 
-def parse_cbo_article_content(soup):
-    # get html link from initial soup
+    # Get the link to the HTML document from the soup
     html_link = parse_cbo_view_document_link(soup)
     
-    # get new soup with the html link
-    soup = scraper.make_request(html_link)
+    # If the view document link is found, request it
+    if html_link:
+        html_content = make_scraper_request(html_link)
+        soup = BeautifulSoup(html_content, 'html.parser')
 
     article_content = {
         'title': '',

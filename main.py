@@ -1,57 +1,75 @@
 from articles import Article
-from initialize import *
 from sites.site_agg import site_parsers
+from bs4 import BeautifulSoup  # Assuming you're using BeautifulSoup for parsing
+from scraper_api import make_scraper_request
+import logging
+
 
 def main(test_mode=True):
+    """
+    Main function to scrape and process articles from various sites.
 
+    Args:
+        test_mode (bool): If True, only the first article per site is processed.
+    """
     try:
         for site_key, site_info in site_parsers.items():
-            print(f"Processing {site_info['name']}...")
+            logging.info(f"Processing {site_info['name']}...")
 
-            # Load the site soup
-            soup = scraper.make_request(site_info['link'])
+            try:
+                # Load the site HTML content via the scraper service
+                site_html = make_scraper_request(site_info['link'], use_proxy=True)
+                soup = BeautifulSoup(site_html, 'html.parser')
 
-            # Get the links
-            links = site_info['links_parse'](soup)
+                # Extract article links using the site's specific parser
+                links = site_info['links_parse'](soup)
 
-            if not links:
-                print(f"No links found for {site_info['name']}")
-                continue
+                if not links:
+                    logging.warning(f"No links found for {site_info['name']}.")
+                    continue
 
-            # In test mode, only process the first link
-            if test_mode:
-                links = links[:1]
+                # In test mode, only process the first link
+                if test_mode:
+                    links = links[:1]
 
-            for link_data in links:
-                # try:
-                    # Get soup for the article
-                    article_soup = scraper.make_request(link_data['link'])
+                for link_data in links:
+                    try:
+                        # Scrape the article page
+                        article_html = make_scraper_request(link_data['link'], use_proxy=True)
+                        article_soup = BeautifulSoup(article_html, 'html.parser')
 
-                    # Parse the article
-                    article_data = site_info['article_parse'](article_soup)
+                        # Parse the article content using the site's specific parser
+                        article_data = site_info['article_parse'](article_soup)
 
-                    # Merge link_data and article_data
-                    full_article_data = {**link_data, **article_data, 'symbol': site_key}
+                        # Merge link_data and article_data, and add the site symbol
+                        full_article_data = {
+                            **link_data,
+                            **article_data,
+                            'symbol': site_key
+                        }
 
-                    # Store the result as an Article object
-                    article = Article.from_dict(full_article_data)
+                        # Create an Article object from the merged data
+                        article = Article.from_dict(full_article_data)
 
-                    # Generate all representations
-                    article.generate_all_representations()
-       
-                    # Upsert to Pinecone
-                    article.upsert_to_pinecone()
+                        # Generate all necessary representations for the article
+                        article.generate_all_representations()
 
-                # except Exception as e:
-                #     print(f"Error processing article from {site_info['name']}: {str(e)}")
+                        # Upsert the article data to Pinecone
+                        article.upsert_to_pinecone()
 
-            if test_mode:
-                print(f"Test mode: Processed one article from {site_info['name']}")
-                print("\n" + "="*50 + "\n")
+                    except Exception as e:
+                        logging.error(f"Error processing article from {site_info['name']} ({link_data['link']}): {str(e)}")
+
+                if test_mode:
+                    logging.info(f"Test mode: Processed one article from {site_info['name']}")
+
+            except Exception as e:
+                logging.error(f"Error processing site {site_info['name']} ({site_info['link']}): {str(e)}")
 
     finally:
-        # Ensure the driver is closed even if an exception occurs
-        scraper.close_driver()
+        # If there's any cleanup needed, do it here
+        # Since scraping is handled by the remote service, there's no driver to close
+        logging.info("Scraping process completed.")
 
 if __name__ == "__main__":
     main(test_mode=True)
