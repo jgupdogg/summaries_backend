@@ -2,6 +2,6 @@ __pycache__
 *.pyc
 .git
 .env
-docker-compose.yml
+docker-compose.local.yml
 Dockerfile
 *.md

@@ -92,13 +92,13 @@ class Article:
         self.dense_vector = create_dense_vector(self.summary)
         return self.dense_vector
 
-    def generate_sparse_vector(self):
-        """Generates and stores the sparse vector representation of the keywords."""
-        if self.summary is None:
-            print('no summary')
-            self.generate_summary()
-        self.sparse_vector = create_sparse_vector(self.keywords)
-        return self.sparse_vector
+    # def generate_sparse_vector(self):
+    #     """Generates and stores the sparse vector representation of the keywords."""
+    #     if self.summary is None:
+    #         print('no summary')
+    #         self.generate_summary()
+    #     self.sparse_vector = create_sparse_vector(self.keywords)
+    #     return self.sparse_vector
     
     def generate_all_representations(self):
         """Generates summary, keywords, dense vector, and sparse vector in the correct order."""
@@ -108,16 +108,46 @@ class Article:
         print(self.keywords)
         self.generate_dense_vector()
         print(f'len dense: {len(self.dense_vector)}')
-        self.generate_sparse_vector()
+        # self.generate_sparse_vector()
         return {
             'summary': self.summary,
             'keywords': self.keywords,
             'dense_vector': self.dense_vector,
-            'sparse_vector': self.sparse_vector
+            # 'sparse_vector': self.sparse_vector
+        }
+    
+    def upsert_to_pinecone(self):
+        """
+        Format and upsert article data to Pinecone.    
+        :param article: Article object containing all necessary data
+        """
+        if not all([self.summary, self.keywords, self.dense_vector, self.sparse_vector]):
+            self.generate_all_representations()
+
+        vector = {
+            'id': self.id,
+            'values': self.dense_vector,
+            # 'sparse_values': self.sparse_vector,
+            'metadata': {
+                'title': self.title,
+                'ai_generated_title': self.ai_generated_title,
+                'date': self.date.isoformat() if isinstance(self.date, date) else self.date,
+                'keywords': self.keywords,
+                'summary': self.summary,
+                'symbol': self.symbol
+            }
         }
 
-    def upsert_to_pinecone(self):
-        return upsert_to_pinecone(self)
+        # Upsert the vector to Pinecone
+        try:
+            upsert_response = index.upsert(vectors=[vector], namespace='articles')
+            print(f"Successfully upserted article {self.id} to Pinecone")
+            return upsert_response
+        except Exception as e:
+            print(f"Error upserting article {self.id} to Pinecone: {str(e)}")
+            return None
+
+
 
     @classmethod
     def from_dict(cls, data):

@@ -5,13 +5,13 @@ FROM python:3.9-slim AS builder
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
+# Set working directory
+WORKDIR /app
+
 # Install build dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends build-essential && \
     rm -rf /var/lib/apt/lists/*
-
-# Set working directory
-WORKDIR /app
 
 # Copy and install dependencies
 COPY requirements.txt .
@@ -30,15 +30,15 @@ WORKDIR /app
 
 # Copy only the necessary files from the builder stage
 COPY --from=builder /usr/local/lib/python3.9/site-packages /usr/local/lib/python3.9/site-packages
-COPY --from=builder /app .
+COPY --from=builder /app /app
 
-# Remove build dependencies to reduce image size
+# Install Tini for better process management
 RUN apt-get update && \
     apt-get install -y --no-install-recommends tini && \
     rm -rf /var/lib/apt/lists/*
 
-# Use Tini as the entrypoint for better signal handling
+# Use Tini as the entrypoint
 ENTRYPOINT ["/usr/bin/tini", "--"]
 
-# Command to run the application
-CMD ["python", "main.py"]
+# Command to run the application using absolute path
+CMD ["python", "/app/main.py"]
