@@ -30,7 +30,7 @@ WORKDIR /app
 
 # Copy only the necessary files from the builder stage
 COPY --from=builder /usr/local/lib/python3.9/site-packages /usr/local/lib/python3.9/site-packages
-COPY --from=builder /app /app
+COPY --from=builder /app .
 
 # Install Tini for better process management
 RUN apt-get update && \
@@ -40,5 +40,5 @@ RUN apt-get update && \
 # Use Tini as the entrypoint
 ENTRYPOINT ["/usr/bin/tini", "--"]
 
-# Command to run the application using absolute path
-CMD ["python", "/app/main.py"]
+# Command to run the application
+CMD ["python", "main.py"]
