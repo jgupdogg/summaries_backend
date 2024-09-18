@@ -21,6 +21,8 @@ def main(test_mode=True):
                 site_html = make_scraper_request(site_info['link'], use_proxy=True)
                 soup = BeautifulSoup(site_html, 'html.parser')
 
+                # log the first 200 characters of the HTML content
+                logging.debug(f"HTML content: {site_html[:200]}")
                 # Extract article links using the site's specific parser
                 links = site_info['links_parse'](soup)
 

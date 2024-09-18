@@ -39,9 +39,24 @@ def make_scraper_request(url, use_proxy=True):
     }
 
     try:
-        response = requests.post(SCRAPER_URL, headers=HEADERS, json=payload, timeout=30)
-        response.raise_for_status()  # Raises HTTPError for bad responses (4xx or 5xx)
-        return response.text  # Assuming the scraper returns HTML content as text
+            response = requests.post(SCRAPER_URL, headers=HEADERS, json=payload, timeout=30)
+            response.raise_for_status()  # Raises HTTPError for bad responses (4xx or 5xx)
+            
+            # Parse the JSON response
+            response_json = response.json()
+            
+            # Check if the 'data' key is present in the response
+            if 'data' in response_json:
+                logging.debug(f"Scraper returned data for URL {url}")
+                return response_json['data']  # Return the HTML content inside the "data" key
+            else:
+                logging.error(f"No 'data' key found in the scraper response for URL {url}")
+                raise ValueError(f"No 'data' key found in the scraper response for URL {url}")
+
     except requests.exceptions.RequestException as e:
-        logging.error(f"Request failed for URL {url}: {e}")
+        logging.error(f"Request failed for URL {url}: {e}", exc_info=True)
+        raise
+    
+    except ValueError as ve:
+        logging.error(f"Invalid response structure: {ve}", exc_info=True)
         raise
