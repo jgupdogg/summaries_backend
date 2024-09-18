@@ -8,6 +8,7 @@ import time
 import os
 from dotenv import load_dotenv
 from prompts import *
+import logging
 
 
 load_dotenv()
@@ -38,21 +39,21 @@ def call_openai(prompt, model="gpt-3.5-turbo", max_retries=10, timeout_duration=
             return response.choices[0].message.content.strip()
         
         except (openai.error.RateLimitError, openai.error.APIError, openai.error.ServiceUnavailableError) as e:
-            print(f"Error occurred: {str(e)}, retrying...")
+            logging.error(f"Error occurred: {str(e)}, retrying...")
             attempt += 1
             time.sleep(2 ** attempt)  # exponential backoff
         
         except openai.error.TimeoutError as e:
             elapsed_time = time.time() - start_time
             if elapsed_time < timeout_duration * max_retries:
-                print(f"Request timed out after {timeout_duration} seconds, sending a new request...")
+                logging.error(f"Request timed out after {timeout_duration} seconds, sending a new request...")
                 attempt += 1
                 continue
             else:
                 raise e  # re-raise the exception if we're out of time
         
         except Exception as e:
-            print(f"Unexpected error occurred: {str(e)}")
+            logging.error(f"Unexpected error occurred: {str(e)}")
             raise e
     
     raise Exception("Failed to get a response within the time limit after multiple retries.")
@@ -98,8 +99,6 @@ def map_summary(article, summary_type='deep', model='gpt-3.5-turbo', chunk_size=
     map_prompt = PromptTemplate(template=get_map_prompt_template(article.content, summary_type), input_variables=["text"])
     combine_prompt = PromptTemplate(template=get_combine_prompt_template(), input_variables=["text"])
 
-    # Create and run the summary chain
-    print("api key: ", api_key)
 
     summary_chain = load_summarize_chain(
         ChatOpenAI(temperature=0, model_name=model, request_timeout=1000, openai_api_key=api_key),

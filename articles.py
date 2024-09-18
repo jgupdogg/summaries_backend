@@ -109,7 +109,6 @@ class Article:
         self.generate_dense_vector()
         print(f'len dense: {len(self.dense_vector)}')
         self.generate_sparse_vector()
-        print(f'sparse: {self.sparse_vector}')
         return {
             'summary': self.summary,
             'keywords': self.keywords,
