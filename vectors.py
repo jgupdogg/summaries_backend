@@ -9,10 +9,15 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 openai.api_key = os.getenv('OPENAI_API_KEY')
+pinecone_api_key = '9005cffd-a90c-4d52-b884-ca042d767051'
+pinecone_index_name = os.getenv('PINECONE_INDEX_NAME')
+
+print(f'Pinecone API Key: {pinecone_api_key}')
+print(f'Pinecone Index Name: {pinecone_index_name}')
 
 # Initialize Pinecone client
-pc = Pinecone(api_key=os.getenv('PINECONE_API_KEY'))
-index = pc.Index(os.getenv('PINECONE_INDEX_NAME'))
+pc = Pinecone(api_key=f'{pinecone_api_key}')
+index = pc.Index(pinecone_index_name)
 
 # Initialize BERT model and tokenizer for SPLADE-like functionality
 # model_id = 'naver/splade-cocondenser-ensembledistil'
