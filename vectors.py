@@ -9,12 +9,10 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 openai.api_key = os.getenv('OPENAI_API_KEY')
-pinecone_api_key = os.getenv('PINECONE_API_KEY')
-pinecone_index_name = os.getenv('PINECONE_INDEX_NAME')
 
 # Initialize Pinecone client
-pc = Pinecone(api_key=pinecone_api_key)
-index = pc.Index(pinecone_index_name)
+pc = Pinecone(api_key=os.getenv('PINECONE_API_KEY'))
+index = pc.Index(os.getenv('PINECONE_INDEX_NAME'))
 
 # Initialize BERT model and tokenizer for SPLADE-like functionality
 # model_id = 'naver/splade-cocondenser-ensembledistil'
@@ -125,10 +123,4 @@ def upsert_to_pinecone(article):
 
 
 
-# Example usage
-vectorizer = SPLADELikeVectorizer(max_dimension=1536)
 
-
-# Initialize Pinecone client
-pc = Pinecone(api_key=os.getenv('PINECONE_API_KEY'))
-index = pc.Index(os.getenv('PINECONE_INDEX_NAME'))
