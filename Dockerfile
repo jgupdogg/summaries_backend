@@ -1,44 +1,29 @@
-# Stage 1: Build Stage
-FROM python:3.9-slim AS builder
+# Use the official Python image as the base
+FROM python:3.11-slim
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Set working directory
+# Set work directory
 WORKDIR /app
 
-# Install build dependencies
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends build-essential && \
-    rm -rf /var/lib/apt/lists/*
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy and install dependencies
+# Install Python dependencies
 COPY requirements.txt .
-RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Stage 2: Production Stage
-FROM python:3.9-slim
+# Copy project code
+COPY . .
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
 
-# Set working directory
-WORKDIR /app
+# Expose any ports if necessary (optional)
+# EXPOSE 8000
 
-# Copy only the necessary files from the builder stage
-COPY --from=builder /usr/local/lib/python3.9/site-packages /usr/local/lib/python3.9/site-packages
-COPY --from=builder /app .
-
-# Install Tini for better process management
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends tini && \
-    rm -rf /var/lib/apt/lists/*
-
-# Use Tini as the entrypoint
-ENTRYPOINT ["/usr/bin/tini", "--"]
-
-# Command to run the application
+# Set the entrypoint
 CMD ["python", "main.py"]

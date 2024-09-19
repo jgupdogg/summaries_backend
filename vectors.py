@@ -3,8 +3,8 @@ from pinecone import Pinecone
 import os
 from datetime import date
 from dotenv import load_dotenv
-from transformers import AutoTokenizer, AutoModelForMaskedLM
-import torch
+# from transformers import AutoTokenizer, AutoModelForMaskedLM
+# import torch
 
 # Load environment variables
 load_dotenv()
@@ -17,49 +17,49 @@ pc = Pinecone(api_key=pinecone_api_key)
 index = pc.Index(pinecone_index_name)
 
 # Initialize BERT model and tokenizer for SPLADE-like functionality
-model_id = 'naver/splade-cocondenser-ensembledistil'
-tokenizer = AutoTokenizer.from_pretrained(model_id)
-model = AutoModelForMaskedLM.from_pretrained(model_id)
-model.eval()
+# model_id = 'naver/splade-cocondenser-ensembledistil'
+# tokenizer = AutoTokenizer.from_pretrained(model_id)
+# model = AutoModelForMaskedLM.from_pretrained(model_id)
+# model.eval()
 
 
 
-class SPLADELikeVectorizer:
-    def __init__(self, max_dimension=1536):
-        self.model = model
-        self.tokenizer = tokenizer
-        self.max_dimension = max_dimension
+# class SPLADELikeVectorizer:
+#     def __init__(self, max_dimension=1536):
+#         self.model = model
+#         self.tokenizer = tokenizer
+#         self.max_dimension = max_dimension
 
-    def generate_sparse_vector(self, text):
-        tokens = self.tokenizer(text, return_tensors='pt', padding=True, truncation=True, max_length=512)
-        with torch.no_grad():
-            output = self.model(**tokens)
+#     def generate_sparse_vector(self, text):
+#         tokens = self.tokenizer(text, return_tensors='pt', padding=True, truncation=True, max_length=512)
+#         with torch.no_grad():
+#             output = self.model(**tokens)
         
-        vec = torch.max(
-            torch.log(1 + torch.relu(output.logits)) * tokens.attention_mask.unsqueeze(-1),
-            dim=1
-        )[0].squeeze()
+#         vec = torch.max(
+#             torch.log(1 + torch.relu(output.logits)) * tokens.attention_mask.unsqueeze(-1),
+#             dim=1
+#         )[0].squeeze()
         
-        cols = vec.nonzero().squeeze().cpu().tolist()
-        weights = vec[cols].cpu().tolist()
+#         cols = vec.nonzero().squeeze().cpu().tolist()
+#         weights = vec[cols].cpu().tolist()
         
-        # Normalize weights
-        if weights:
-            max_weight = max(weights)
-            weights = [w / max_weight for w in weights]
+#         # Normalize weights
+#         if weights:
+#             max_weight = max(weights)
+#             weights = [w / max_weight for w in weights]
         
-        return {
-            'indices': cols,
-            'values': weights
-        }
+#         return {
+#             'indices': cols,
+#             'values': weights
+#         }
 
 
-def create_sparse_vector(words):
-    vectorizer = SPLADELikeVectorizer()
-    if isinstance(words, list):
-        words = " ".join(words)
-    sparse_vector = vectorizer.generate_sparse_vector(words)
-    return sparse_vector
+# def create_sparse_vector(words):
+#     vectorizer = SPLADELikeVectorizer()
+#     if isinstance(words, list):
+#         words = " ".join(words)
+#     sparse_vector = vectorizer.generate_sparse_vector(words)
+#     return sparse_vector
 
 
 
