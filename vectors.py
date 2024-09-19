@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 openai.api_key = os.getenv('OPENAI_API_KEY')
-pinecone_api_key = '9005cffd-a90c-4d52-b884-ca042d767051'
+pinecone_api_key = os.getenv('PINECONE_API_KEY')
 pinecone_index_name = os.getenv('PINECONE_INDEX_NAME')
 
 print(f'Pinecone API Key: {pinecone_api_key}')
